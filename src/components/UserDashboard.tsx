@@ -30,12 +30,14 @@ interface UserDashboardProps {
   userType?: "child" | "parent";
   eggBalance?: number;
   selectedBarbie?: string;
+  onBackToSelection?: () => void;
 }
 
 const UserDashboard = ({
   userType = "child",
   eggBalance = 50,
   selectedBarbie = "Fashion Barbie",
+  onBackToSelection,
 }: UserDashboardProps) => {
   const [currentView, setCurrentView] = useState<string>("home");
   const [isParentAuth, setIsParentAuth] = useState<boolean>(false);
@@ -238,12 +240,18 @@ const UserDashboard = ({
             <p className="text-muted-foreground">Manage rewards and progress</p>
           </div>
         </div>
-        <Button variant="outline" onClick={() => setIsParentAuth(false)}>
+        <Button
+          variant="outline"
+          onClick={() => {
+            setIsParentAuth(false);
+            onBackToSelection?.();
+          }}
+        >
           Exit Admin Mode
         </Button>
       </div>
 
-      <ParentAdminPanel currentEggBalance={eggBalance} />
+      <ParentAdminPanel authenticated={true} currentEggBalance={eggBalance} />
     </div>
   );
 
