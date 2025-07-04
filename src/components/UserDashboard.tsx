@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -25,24 +25,64 @@ import BarbieGallery from "./BarbieGallery";
 import AccessoryShop from "./AccessoryShop";
 import ParentAdminPanel from "./ParentAdminPanel";
 import { Egg, Baby, ShoppingBag, Calendar, User, Lock } from "lucide-react";
+import { useEggBalance } from "@/hooks/useEggBalance";
 
 interface UserDashboardProps {
   userType?: "child" | "parent";
-  eggBalance?: number;
   selectedBarbie?: string;
   onBackToSelection?: () => void;
 }
 
+interface Barbie {
+  id: string;
+  name: string;
+  image: string;
+  description: string;
+}
+
 const UserDashboard = ({
   userType = "child",
-  eggBalance = 50,
   selectedBarbie = "Fashion Barbie",
   onBackToSelection,
 }: UserDashboardProps) => {
+  const { eggBalance } = useEggBalance();
   const [currentView, setCurrentView] = useState<string>("home");
   const [isParentAuth, setIsParentAuth] = useState<boolean>(false);
   const [password, setPassword] = useState<string>("");
   const [authError, setAuthError] = useState<boolean>(false);
+  const [selectedBarbieData, setSelectedBarbieData] = useState<Barbie | null>(
+    null
+  );
+
+  // Default Barbie data
+  const defaultBarbie: Barbie = {
+    id: "1",
+    name: "Fashion Barbie",
+    image: "/images/fashion-barbie.jpg",
+    description: "The classic fashion Barbie with stylish outfits",
+  };
+
+  // Load selected Barbie from localStorage on component mount
+  useEffect(() => {
+    const savedBarbie = localStorage.getItem("selectedBarbie");
+    if (savedBarbie) {
+      try {
+        const parsedBarbie = JSON.parse(savedBarbie);
+        setSelectedBarbieData(parsedBarbie);
+      } catch (error) {
+        console.error("Error parsing saved Barbie data:", error);
+        setSelectedBarbieData(defaultBarbie);
+      }
+    } else {
+      setSelectedBarbieData(defaultBarbie);
+    }
+  }, []);
+
+  // Handle Barbie selection
+  const handleBarbieSelect = (barbie: Barbie) => {
+    setSelectedBarbieData(barbie);
+    localStorage.setItem("selectedBarbie", JSON.stringify(barbie));
+  };
 
   const handleParentAuth = () => {
     // Simple password check - in a real app, this would be more secure
@@ -106,15 +146,16 @@ const UserDashboard = ({
             <CardContent>
               <div className="h-40 flex items-center justify-center">
                 <img
-                  src="https://images.unsplash.com/photo-1559535332-db9971090158?w=400&q=80"
-                  alt="Barbie dolls"
+                  src={selectedBarbieData?.image || defaultBarbie.image}
+                  alt={selectedBarbieData?.name || defaultBarbie.name}
                   className="h-full object-contain rounded-md"
                 />
               </div>
             </CardContent>
             <CardFooter>
               <p className="text-sm text-muted-foreground">
-                Currently selected: {selectedBarbie}
+                Currently selected:{" "}
+                {selectedBarbieData?.name || defaultBarbie.name}
               </p>
             </CardFooter>
           </Card>
@@ -173,9 +214,12 @@ const UserDashboard = ({
           </Card>
         </div>
       ) : currentView === "barbies" ? (
-        <BarbieGallery />
+        <BarbieGallery
+          onSelectBarbie={handleBarbieSelect}
+          selectedBarbieId={selectedBarbieData?.id || ""}
+        />
       ) : currentView === "shop" ? (
-        <AccessoryShop eggBalance={eggBalance} />
+        <AccessoryShop />
       ) : null}
 
       <div className="fixed bottom-4 right-4">
@@ -251,7 +295,7 @@ const UserDashboard = ({
         </Button>
       </div>
 
-      <ParentAdminPanel authenticated={true} currentEggBalance={eggBalance} />
+      <ParentAdminPanel authenticated={true} />
     </div>
   );
 

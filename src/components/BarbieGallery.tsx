@@ -26,36 +26,31 @@ const BarbieGallery = ({
     {
       id: "1",
       name: "Fashion Barbie",
-      image:
-        "https://images.unsplash.com/photo-1559535332-db9971090158?w=600&q=80",
+      image: "/images/barbie1.webp",
       description: "The classic fashion Barbie with stylish outfits",
     },
     {
       id: "2",
       name: "Doctor Barbie",
-      image:
-        "https://images.unsplash.com/photo-1608667508764-33cf0726b13a?w=600&q=80",
+      image: "/images/barbie2.jpg",
       description: "Barbie as a medical professional",
     },
     {
       id: "3",
       name: "Astronaut Barbie",
-      image:
-        "https://images.unsplash.com/photo-1581044777550-4cfa60707c03?w=600&q=80",
+      image: "/images/barbie3.webp",
       description: "Barbie ready for space adventures",
     },
     {
       id: "4",
       name: "Mermaid Barbie",
-      image:
-        "https://images.unsplash.com/photo-1608667508764-33cf0726b13a?w=600&q=80",
+      image: "/images/mermaid-barbie.jpg",
       description: "Barbie as a beautiful mermaid",
     },
     {
       id: "5",
       name: "Princess Barbie",
-      image:
-        "https://images.unsplash.com/photo-1559535332-db9971090158?w=600&q=80",
+      image: "/images/princess-barbie.jpg",
       description: "Barbie as a royal princess",
     },
   ];
@@ -68,7 +63,7 @@ const BarbieGallery = ({
 
   const prevBarbie = () => {
     setCurrentIndex(
-      (prevIndex) => (prevIndex - 1 + barbies.length) % barbies.length,
+      (prevIndex) => (prevIndex - 1 + barbies.length) % barbies.length
     );
   };
 
@@ -148,7 +143,11 @@ const BarbieGallery = ({
             <motion.div
               key={barbie.id}
               whileHover={{ scale: 1.05 }}
-              className={`cursor-pointer rounded-md overflow-hidden ${currentIndex === index ? "ring-4 ring-pink-500" : "ring-2 ring-transparent"}`}
+              className={`cursor-pointer rounded-md overflow-hidden ${
+                currentIndex === index
+                  ? "ring-4 ring-pink-500"
+                  : "ring-2 ring-transparent"
+              }`}
               onClick={() => setCurrentIndex(index)}
             >
               <div className="w-16 h-16 relative">
@@ -172,7 +171,9 @@ const BarbieGallery = ({
           {barbies.map((_, index) => (
             <div
               key={index}
-              className={`w-2 h-2 rounded-full ${currentIndex === index ? "bg-pink-500" : "bg-pink-200"}`}
+              className={`w-2 h-2 rounded-full ${
+                currentIndex === index ? "bg-pink-500" : "bg-pink-200"
+              }`}
             />
           ))}
         </div>

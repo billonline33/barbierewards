@@ -24,12 +24,11 @@ import {
   TargetIcon,
   CoinsIcon,
 } from "lucide-react";
+import { useEggBalance } from "@/hooks/useEggBalance";
 
 interface ParentAdminPanelProps {
   authenticated?: boolean;
   onAuthenticate?: (password: string) => void;
-  onAddEggs?: (amount: number, reason: string) => void;
-  currentEggBalance?: number;
   studyProgress?: {
     totalMinutes: number;
     weeklyGoal: number;
@@ -52,8 +51,6 @@ interface ParentAdminPanelProps {
 const ParentAdminPanel: React.FC<ParentAdminPanelProps> = ({
   authenticated = false,
   onAuthenticate = () => {},
-  onAddEggs = () => {},
-  currentEggBalance = 0,
   studyProgress = {
     totalMinutes: 0,
     weeklyGoal: 300,
@@ -97,11 +94,12 @@ const ParentAdminPanel: React.FC<ParentAdminPanelProps> = ({
     },
   ],
 }) => {
+  const { eggBalance, addEggs } = useEggBalance();
   const [password, setPassword] = useState("");
   const [eggAmount, setEggAmount] = useState(1);
   const [eggReason, setEggReason] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-    new Date(),
+    new Date()
   );
   const [newGoal, setNewGoal] = useState({
     title: "",
@@ -116,7 +114,7 @@ const ParentAdminPanel: React.FC<ParentAdminPanelProps> = ({
 
   const handleAddEggs = (e: React.FormEvent) => {
     e.preventDefault();
-    onAddEggs(eggAmount, eggReason);
+    addEggs(eggAmount);
     setEggAmount(1);
     setEggReason("");
   };
@@ -174,7 +172,7 @@ const ParentAdminPanel: React.FC<ParentAdminPanelProps> = ({
         <div className="flex items-center gap-2">
           <CoinsIcon className="h-6 w-6 text-yellow-500" />
           <span className="text-xl font-semibold">
-            {currentEggBalance} Golden Eggs
+            {eggBalance} Golden Eggs
           </span>
         </div>
       </div>

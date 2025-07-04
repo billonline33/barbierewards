@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Card,
@@ -29,7 +29,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ShoppingCart, Search, Filter, Egg } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ShoppingCart, Search, Filter, Egg, X } from "lucide-react";
+import { useEggBalance } from "@/hooks/useEggBalance";
 
 interface AccessoryItem {
   id: string;
@@ -41,93 +48,142 @@ interface AccessoryItem {
 }
 
 interface AccessoryShopProps {
-  eggBalance?: number;
+  // Props are now optional since we're using the hook
   onPurchase?: (item: AccessoryItem) => void;
 }
 
-const AccessoryShop = ({
-  eggBalance = 100,
-  onPurchase = () => {},
-}: AccessoryShopProps) => {
+const AccessoryShop = ({ onPurchase = () => {} }: AccessoryShopProps) => {
+  const { eggBalance, spendEggs, hasEnoughEggs } = useEggBalance();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("price-low");
   const [cart, setCart] = useState<AccessoryItem[]>([]);
   const [selectedItem, setSelectedItem] = useState<AccessoryItem | null>(null);
+  const [purchasedItems, setPurchasedItems] = useState<Set<string>>(new Set());
+  const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<AccessoryItem | null>(
+    null
+  );
+
+  // Load purchased items from localStorage on component mount
+  useEffect(() => {
+    const savedPurchasedItems = localStorage.getItem("purchasedAccessories");
+    if (savedPurchasedItems) {
+      try {
+        const parsedItems = JSON.parse(savedPurchasedItems);
+        setPurchasedItems(new Set(parsedItems));
+      } catch (error) {
+        console.error("Error parsing saved purchased items:", error);
+      }
+    }
+  }, []);
+
+  // Save purchased items to localStorage whenever they change
+  const addPurchasedItem = (itemId: string) => {
+    setPurchasedItems((prev) => {
+      const newSet = new Set(prev).add(itemId);
+      localStorage.setItem("purchasedAccessories", JSON.stringify([...newSet]));
+      return newSet;
+    });
+  };
 
   // Mock data for accessories
   const accessories: AccessoryItem[] = [
     {
       id: "1",
-      name: "Pink Party Dress",
+      name: "Blue Dress",
       price: 25,
-      image:
-        "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=300&q=80",
+      image: "/images/accessories/blueDress.jpg",
       category: "clothes",
-      description: "A beautiful pink party dress for special occasions.",
+      description: "A beautiful blue dress.",
     },
     {
       id: "2",
-      name: "Beach Set",
+      name: "Brown Shoe",
       price: 30,
-      image:
-        "https://images.unsplash.com/photo-1575537302964-96cd47c06b1b?w=300&q=80",
+      image: "/images/accessories/brownshoe.jpg",
       category: "clothes",
       description: "Perfect outfit for a day at the beach.",
     },
     {
       id: "3",
-      name: "Mini Puppy",
+      name: "Hair Band",
       price: 15,
-      image:
-        "https://images.unsplash.com/photo-1591160690555-5debfba289f0?w=300&q=80",
+      image: "/images/accessories/hairband.jpg",
       category: "toys",
-      description: "A cute puppy companion for your Barbie.",
+      description: "A cute hair band for your Barbie.",
     },
     {
       id: "4",
-      name: "Barbie Convertible",
+      name: "Handbag",
       price: 50,
-      image:
-        "https://images.unsplash.com/photo-1581235720704-06d3acfcb36f?w=300&q=80",
+      image: "/images/accessories/handbag.jpg",
       category: "toys",
-      description: "A stylish pink convertible car.",
+      description: "A stylish hand bag.",
     },
     {
       id: "5",
-      name: "Sunglasses",
+      name: "Pants",
       price: 10,
-      image:
-        "https://images.unsplash.com/photo-1577803645773-f96470509666?w=300&q=80",
+      image: "/images/accessories/pants.jpg",
       category: "fashion",
-      description: "Trendy sunglasses for a fashionable look.",
+      description: "Trendy pants for Barbie.",
     },
     {
       id: "6",
-      name: "Jewelry Set",
+      name: "Purple Dress",
       price: 20,
-      image:
-        "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=300&q=80",
+      image: "/images/accessories/purpleDress.jpg",
       category: "fashion",
-      description: "Elegant necklace and earrings set.",
+      description: "A lovely purple dress.",
     },
     {
       id: "7",
-      name: "Mini Sofa",
-      price: 35,
-      image:
-        "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=300&q=80",
-      category: "house",
-      description: "A comfortable miniature sofa for Barbie's house.",
+      name: "Red Shoe",
+      price: 18,
+      image: "/images/accessories/redshoe.jpg",
+      category: "fashion",
+      description: "Stylish red shoes.",
     },
     {
       id: "8",
-      name: "Kitchen Set",
-      price: 45,
-      image:
-        "https://images.unsplash.com/photo-1556911220-bff31c812dba?w=300&q=80",
+      name: "Swimming Suite",
+      price: 22,
+      image: "/images/accessories/swimmingsuite.jpg",
+      category: "clothes",
+      description: "A cute swimming suite for Barbie.",
+    },
+    {
+      id: "9",
+      name: "T-Shirt",
+      price: 12,
+      image: "/images/accessories/tshirt.jpg",
+      category: "clothes",
+      description: "Casual t-shirt for Barbie.",
+    },
+    {
+      id: "10",
+      name: "Wedding Dress",
+      price: 60,
+      image: "/images/accessories/weddingDress.jpg",
+      category: "clothes",
+      description: "A beautiful wedding dress.",
+    },
+    {
+      id: "11",
+      name: "Yellow Dress",
+      price: 25,
+      image: "/images/accessories/yellowDress.jpg",
+      category: "clothes",
+      description: "A bright yellow dress.",
+    },
+    {
+      id: "12",
+      name: "Yellow Hair Dryer",
+      price: 15,
+      image: "/images/accessories/yellowhairdryer.jpg",
       category: "house",
-      description: "Complete kitchen set with appliances and utensils.",
+      description: "A yellow hair dryer for Barbie.",
     },
   ];
 
@@ -136,11 +192,10 @@ const AccessoryShop = ({
     .filter(
       (item) =>
         item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchQuery.toLowerCase()),
+        item.description.toLowerCase().includes(searchQuery.toLowerCase())
     )
     .filter(
-      (item) =>
-        selectedCategory === "all" || item.category === selectedCategory,
+      (item) => selectedCategory === "all" || item.category === selectedCategory
     );
 
   // Sort accessories based on selected sort option
@@ -156,13 +211,21 @@ const AccessoryShop = ({
   };
 
   const handlePurchase = (item: AccessoryItem) => {
-    if (eggBalance >= item.price) {
+    if (hasEnoughEggs(item.price)) {
+      spendEggs(item.price);
       onPurchase(item);
+      // Mark item as purchased and save to localStorage
+      addPurchasedItem(item.id);
       // Clear cart after purchase
       setCart(cart.filter((cartItem) => cartItem.id !== item.id));
     } else {
       setSelectedItem(item);
     }
+  };
+
+  const handleImageClick = (item: AccessoryItem) => {
+    setSelectedImage(item);
+    setImageModalOpen(true);
   };
 
   const totalCartPrice = cart.reduce((sum, item) => sum + item.price, 0);
@@ -254,7 +317,10 @@ const AccessoryShop = ({
                 item={item}
                 onAddToCart={handleAddToCart}
                 onPurchase={handlePurchase}
+                onImageClick={handleImageClick}
                 eggBalance={eggBalance}
+                isPurchased={purchasedItems.has(item.id)}
+                hasEnoughEggs={hasEnoughEggs}
               />
             ))}
           </div>
@@ -271,7 +337,10 @@ const AccessoryShop = ({
                     item={item}
                     onAddToCart={handleAddToCart}
                     onPurchase={handlePurchase}
+                    onImageClick={handleImageClick}
                     eggBalance={eggBalance}
+                    isPurchased={purchasedItems.has(item.id)}
+                    hasEnoughEggs={hasEnoughEggs}
                   />
                 ))}
             </div>
@@ -302,7 +371,8 @@ const AccessoryShop = ({
                     <img
                       src={item.image}
                       alt={item.name}
-                      className="w-12 h-12 object-cover rounded-md"
+                      className="w-12 h-12 object-cover rounded-md cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => handleImageClick(item)}
                     />
                     <div>
                       <p className="font-medium">{item.name}</p>
@@ -329,7 +399,7 @@ const AccessoryShop = ({
               <AlertDialogTrigger asChild>
                 <Button
                   className="bg-pink-500 hover:bg-pink-600"
-                  disabled={totalCartPrice > eggBalance}
+                  disabled={!hasEnoughEggs(totalCartPrice)}
                 >
                   Checkout
                 </Button>
@@ -346,7 +416,13 @@ const AccessoryShop = ({
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={() => {
-                      cart.forEach((item) => onPurchase(item));
+                      cart.forEach((item) => {
+                        if (hasEnoughEggs(item.price)) {
+                          spendEggs(item.price);
+                          onPurchase(item);
+                          addPurchasedItem(item.id);
+                        }
+                      });
                       setCart([]);
                     }}
                   >
@@ -379,6 +455,77 @@ const AccessoryShop = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Image Modal */}
+      <Dialog open={imageModalOpen} onOpenChange={setImageModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+          <DialogHeader className="p-6 pb-2">
+            <DialogTitle className="text-2xl font-bold text-pink-600">
+              {selectedImage?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="relative flex-1 overflow-hidden">
+            {selectedImage && (
+              <div className="relative">
+                <img
+                  src={selectedImage.image}
+                  alt={selectedImage.name}
+                  className="w-full h-auto max-h-[60vh] object-contain rounded-lg"
+                />
+                <div className="absolute top-4 right-4 flex items-center gap-2">
+                  <div className="bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full flex items-center text-lg font-bold">
+                    <Egg className="h-5 w-5 mr-2" />
+                    {selectedImage.price}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="p-6 pt-2">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                {selectedImage?.category}
+              </span>
+            </div>
+            <p className="text-gray-700 mb-4">{selectedImage?.description}</p>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  if (selectedImage) {
+                    handleAddToCart(selectedImage);
+                    setImageModalOpen(false);
+                  }
+                }}
+                disabled={
+                  selectedImage ? purchasedItems.has(selectedImage.id) : false
+                }
+              >
+                {selectedImage && purchasedItems.has(selectedImage.id)
+                  ? "Owned"
+                  : "Add to Cart"}
+              </Button>
+              <Button
+                className="flex-1 bg-pink-500 hover:bg-pink-600"
+                onClick={() => {
+                  if (selectedImage) {
+                    handlePurchase(selectedImage);
+                    setImageModalOpen(false);
+                  }
+                }}
+                disabled={
+                  selectedImage ? purchasedItems.has(selectedImage.id) : false
+                }
+              >
+                {selectedImage && purchasedItems.has(selectedImage.id)
+                  ? "Owned"
+                  : "Buy Now"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
@@ -387,31 +534,69 @@ interface AccessoryCardProps {
   item: AccessoryItem;
   onAddToCart: (item: AccessoryItem) => void;
   onPurchase: (item: AccessoryItem) => void;
+  onImageClick: (item: AccessoryItem) => void;
   eggBalance: number;
+  isPurchased: boolean;
+  hasEnoughEggs: (amount: number) => boolean;
 }
 
 const AccessoryCard = ({
   item,
   onAddToCart,
   onPurchase,
+  onImageClick,
   eggBalance,
+  isPurchased,
+  hasEnoughEggs,
 }: AccessoryCardProps) => {
   return (
-    <Card className="overflow-hidden bg-white hover:shadow-lg transition-shadow">
-      <div className="relative h-48">
+    <Card
+      className={`overflow-hidden transition-shadow ${
+        isPurchased ? "bg-gray-100 opacity-60" : "bg-white hover:shadow-lg"
+      }`}
+    >
+      <div
+        className="relative h-48 cursor-pointer"
+        onClick={() => onImageClick(item)}
+      >
         <img
           src={item.image}
           alt={item.name}
-          className="w-full h-full object-cover"
+          className={`w-full h-full object-cover transition-transform hover:scale-105 ${
+            isPurchased ? "grayscale" : ""
+          }`}
         />
-        <div className="absolute top-2 right-2 bg-yellow-400 text-yellow-900 px-2 py-1 rounded-full flex items-center text-sm font-bold">
+        <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-10 transition-all duration-200 flex items-center justify-center">
+          <div className="opacity-0 hover:opacity-100 transition-opacity duration-200 bg-white bg-opacity-90 rounded-full p-2">
+            <Search className="h-6 w-6 text-gray-700" />
+          </div>
+        </div>
+        <div className="absolute bottom-2 left-2 opacity-0 hover:opacity-100 transition-opacity duration-200 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+          Click to view
+        </div>
+        <div
+          className={`absolute top-2 right-2 px-2 py-1 rounded-full flex items-center text-sm font-bold ${
+            isPurchased
+              ? "bg-gray-400 text-gray-700"
+              : "bg-yellow-400 text-yellow-900"
+          }`}
+        >
           <Egg className="h-4 w-4 mr-1" />
           {item.price}
         </div>
+        {isPurchased && (
+          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <span className="text-white font-bold text-lg">PURCHASED</span>
+          </div>
+        )}
       </div>
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg">{item.name}</CardTitle>
-        <CardDescription className="line-clamp-2">
+        <CardTitle className={`text-lg ${isPurchased ? "text-gray-500" : ""}`}>
+          {item.name}
+        </CardTitle>
+        <CardDescription
+          className={`line-clamp-2 ${isPurchased ? "text-gray-400" : ""}`}
+        >
           {item.description}
         </CardDescription>
       </CardHeader>
@@ -421,13 +606,18 @@ const AccessoryCard = ({
           size="sm"
           className="flex-1"
           onClick={() => onAddToCart(item)}
+          disabled={isPurchased}
         >
-          Add to Cart
+          {isPurchased ? "Owned" : "Add to Cart"}
         </Button>
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button size="sm" className="flex-1 bg-pink-500 hover:bg-pink-600">
-              Buy Now
+            <Button
+              size="sm"
+              className="flex-1 bg-pink-500 hover:bg-pink-600"
+              disabled={isPurchased}
+            >
+              {isPurchased ? "Owned" : "Buy Now"}
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
@@ -442,9 +632,9 @@ const AccessoryCard = ({
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => onPurchase(item)}
-                disabled={eggBalance < item.price}
+                disabled={!hasEnoughEggs(item.price)}
               >
-                Purchase
+                Yes, Purchase
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
