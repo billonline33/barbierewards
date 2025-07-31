@@ -44,13 +44,13 @@ const BarbieGallery = ({
     {
       id: "4",
       name: "Mermaid Barbie",
-      image: "/images/mermaid-barbie.jpg",
+      image: "/images/mermaidBarbie.jpg",
       description: "Barbie as a beautiful mermaid",
     },
     {
       id: "5",
       name: "Princess Barbie",
-      image: "/images/princess-barbie.jpg",
+      image: "/images/royal-barbie.webp",
       description: "Barbie as a royal princess",
     },
   ];
